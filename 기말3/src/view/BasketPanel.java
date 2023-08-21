@@ -1,0 +1,121 @@
+package view;
+
+import java.io.IOException;
+import java.util.Vector;
+
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+
+import control.CLecture;
+import global.Constants.EBasketPanel;
+import global.Constants.ELecturePanel;
+import valueObject.VCLecture;
+
+public class BasketPanel extends JPanel {
+	private static final long serialVersionUID = 1L;
+	
+	private CLecture cLecture;
+	private Vector<VCLecture> vCLectures;
+	
+	private BasketList basketList;
+	
+	public BasketPanel() {
+		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		this.vCLectures = new Vector<VCLecture>();
+		this.basketList = new BasketList();
+		JScrollPane scrollpane = new JScrollPane();
+		scrollpane.setViewportView(this.basketList);
+		this.add(scrollpane);
+	}
+	public void initialize(String fileName) {
+		
+	}
+	public void finish(String fileName) {
+		try {
+			this.cLecture.setData(fileName, this.vCLectures);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void addRows(Vector<VCLecture> vCRemovedLectures) {
+		this.basketList.addRows(vCRemovedLectures);
+		this.basketList.getSelectionModel().clearSelection();
+		this.basketList.getSelectionModel().addSelectionInterval(0, 0);
+	}
+	public void removeSelectedLectures() {
+		this.basketList.removeSelectedLectures();
+	}
+	public Vector<VCLecture> getSelectedLectures() {
+		return this.basketList.getSelectedLectures();
+	}
+
+
+	private class BasketList extends JTable{
+		private static final long serialVersionUID = 1L;
+		
+		private DefaultTableModel tableModel;
+		
+		private BasketList() {
+			Vector<String> header = new Vector<String>();
+			for(int i =1; i<EBasketPanel.values().length;i++){
+				header.add(EBasketPanel.values()[i].getString());
+			}
+			
+			this.tableModel = new DefaultTableModel(header,0);
+			this.setModel(this.tableModel);
+			
+		}
+		public Vector<VCLecture> getSelectedLectures() {
+			Vector<VCLecture> vCRemovedLectures = new Vector<VCLecture>();
+			for(int i = this.tableModel.getRowCount() -1; i>=0;i--) {
+				if(this.isRowSelected(i)) {
+					this.tableModel.removeRow(i);
+					vCRemovedLectures.add(vCLectures.get(i));
+					vCLectures.remove(i);
+				}
+			}
+			this.getSelectionModel().addSelectionInterval(0, 0);
+
+			return vCRemovedLectures;
+		}
+		public void removeSelectedLectures() {
+			for(int i = this.tableModel.getRowCount() -1; i>=0;i--) {
+				if(this.isRowSelected(i)) {
+					this.tableModel.removeRow(i);
+					vCLectures.remove(i);
+
+				}
+			}
+			this.getSelectionModel().addSelectionInterval(0, 0);
+
+		}
+
+		public void addRows(Vector<VCLecture> vCRemovedLectures) {
+				Vector<String> rowData;
+				boolean overlap = false;
+				for(VCLecture vCLecture: vCRemovedLectures) {					
+					rowData = new Vector<String>();
+					if(!(this.getRowCount()==0)) { //contains: 안에 있는지 확인
+						for(int i=0; i<this.getRowCount(); i++) {
+							if(this.tableModel.getValueAt(i, 0).equals(vCLecture.getName())) {
+								overlap =true;
+							}
+						}
+					}if(overlap) {overlap = false;}
+					else {
+					rowData.add(vCLecture.getName());
+					this.tableModel.addRow(rowData);
+					vCLectures.add(vCLecture);
+					}
+				}
+					this.getSelectionModel().addSelectionInterval(0, 0);
+					this.updateUI();
+		} 
+	}
+
+
+}
